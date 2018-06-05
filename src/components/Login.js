@@ -9,12 +9,12 @@ class Login extends Component {
      */
     constructor(props) {
         super(props);
+
         this.state = {
             isUsernameTaken: false,
             isUsernameEmpty: true,
             username: ''
         };
-
         this.handleLoginClick = this.handleLoginClick.bind(this);
         this.handleInputChange = this.handleInputChange.bind(this);
     }
@@ -47,6 +47,7 @@ class Login extends Component {
         const isEmpty = value.trim().length === 0;
 
         this.setState({
+            isUsernameTaken: false,
             isUsernameEmpty: isEmpty,
             username: value
         });
