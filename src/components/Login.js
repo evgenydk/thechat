@@ -20,6 +20,8 @@ class Login extends Component {
 
     /**
      * Handles login button click.
+     *
+     * @param event
      */
     handleLoginClick(event) {
         event.preventDefault();
@@ -27,7 +29,11 @@ class Login extends Component {
         const takenUsernames = ['lol', 'kek', 'cheburek'];
         const isTaken = takenUsernames.includes(this.state.username);
 
-        this.setState({isUsernameTaken: isTaken});
+        if (isTaken) {
+            return this.setState({isUsernameTaken: isTaken});
+        }
+
+        this.props.history.push('/chat');
     }
 
     /**
