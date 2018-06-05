@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { BrowserRouter } from 'react-router-dom';
 import logo from '../logo.svg';
 import '../css/app.css';
 
@@ -18,5 +17,12 @@ class App extends Component {
     );
   }
 }
+
+const App = () => (
+    <Switch>
+        <Route exact path='/login' component={Login}/>
+        <Route path='/chat' component={Chat}/>
+    </Switch>
+);
 
 export default App;

@@ -1,35 +1,15 @@
-.App {
-  text-align: center;
+body {
+  background-color: #EEE;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
+.form-wrapper {
+  min-height: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
-}
-
-.App-title {
-  font-size: 1.5em;
-}
-
-.App-intro {
-  font-size: large;
-}
-
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-
-.login-form {
-  width: 400px;
-  border: solid 1px #555555;
-  padding: 20px;
+.form-wrapper .form-group:last-child {
+  margin-bottom: 0;
 }
