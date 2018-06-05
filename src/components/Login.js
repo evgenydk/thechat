@@ -11,6 +11,7 @@ class Login extends Component {
         super(props);
         this.state = {
             isUsernameTaken: false,
+            isUsernameEmpty: true,
             username: ''
         };
 
@@ -42,7 +43,13 @@ class Login extends Component {
      * @param event
      */
     handleInputChange(event) {
-        this.setState({ username: event.target.value });
+        const value = event.target.value;
+        const isEmpty = value.trim().length === 0;
+
+        this.setState({
+            isUsernameEmpty: isEmpty,
+            username: value
+        });
     }
 
     render() {
@@ -58,12 +65,24 @@ class Login extends Component {
                         <FormGroup>
                             <InputGroup>
                                 <InputGroupAddon addonType="prepend">@</InputGroupAddon>
-                                <Input id="username" placeholder="username" value={this.state.username} invalid={isUsernameTaken} onChange={this.handleInputChange} />
+                                <Input
+                                    id="username"
+                                    placeholder="username"
+                                    value={this.state.username}
+                                    invalid={isUsernameTaken}
+                                    onChange={this.handleInputChange}
+                                    autocomplete="off"
+                                />
                                 <FormFeedback>Unfortunately, this username is in use now. Try another one</FormFeedback>
                             </InputGroup>
                         </FormGroup>
                         <FormGroup>
-                            <Button color="primary" block onClick={this.handleLoginClick}>Login</Button>
+                            <Button
+                                color="primary"
+                                onClick={this.handleLoginClick}
+                                disabled={this.state.isUsernameEmpty}
+                                block
+                            >Login</Button>
                         </FormGroup>
                     </Form>
                 </div>
