@@ -21,10 +21,28 @@ class Login extends Component {
         this.state = {
             isUsernameEmpty: true,
             username: '',
-            error: ''
+            error: null
         };
         this.handleLoginClick = this.handleLoginClick.bind(this);
         this.handleInputChange = this.handleInputChange.bind(this);
+    }
+
+    /**
+     * First check whether the user is already
+     * logged in and redirect him to the chat
+     * in case he is.
+     */
+    componentWillMount() {
+        fetch('http://localhost:1337/user/check', {
+            method: 'PUT',
+            credentials: 'include'
+        }).then(response => {
+            return response.json();
+        }).then(data => {console.dir(data);
+            if (data.body.uuid) {
+                return this.props.history.push('/chat');
+            }
+        });
     }
 
     /**
@@ -49,7 +67,8 @@ class Login extends Component {
             }),
             headers: {
                 "Content-Type": "application/json"
-            }
+            },
+            credentials: 'include'
         }).then(response => {
             return response.json();
         }).then(data => {console.dir(data);
@@ -75,13 +94,13 @@ class Login extends Component {
         this.setState({
             isUsernameEmpty: isEmpty,
             username: value,
-            error: ''
+            error: null
         });
     }
 
     render() {
         const error = this.state.error;
-        const isError = error !== '';
+        const isError = error !== null;
 
         return (
             <div className="form-wrapper">

@@ -32,10 +32,11 @@ class Chat extends React.Component {
     constructor(props) {
         super(props);
 
-        this.toggle = this.toggle.bind(this);
         this.state = {
             isOpen: false
         };
+        this.toggle = this.toggle.bind(this);
+        this.logout = this.logout.bind(this);
     }
 
     toggle() {
@@ -50,11 +51,30 @@ class Chat extends React.Component {
      */
     componentWillMount() {
         fetch('http://localhost:1337/user/check', {
-            method: 'PUT'
+            method: 'PUT',
+            credentials: 'include'
         }).then(response => {
             return response.json();
         }).then(data => {console.dir(data);
-            if (!data.session) {
+            if (!data.body.uuid) {
+                this.props.history.push('/login');
+            }
+        });
+    }
+
+    /**
+     * Log out current user from the chat.
+     */
+    logout() {
+        fetch('http://localhost:1337/user/logout', {
+            method: 'GET',
+            credentials: 'include'
+        }).then(response => {
+            return response.json();
+        }).then(data => {
+            // Redirect browser page to login in
+            // case of successful logging out
+            if (data.code === 200) {
                 this.props.history.push('/login');
             }
         });
@@ -72,7 +92,7 @@ class Chat extends React.Component {
                                         <span className="navbar-text">
                                             Hello, <span className="font-weight-bold">eugenics</span>
                                         </span>
-                                <Button color="danger">Log out</Button>
+                                <Button color="danger" onClick={this.logout}>Log out</Button>
                             </Collapse>
                         </Navbar>
                     </Col>
