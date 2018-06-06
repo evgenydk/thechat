@@ -24,6 +24,11 @@ import {
     DropdownItem } from 'reactstrap';
 
 class Chat extends React.Component {
+    /**
+     * Constructor.
+     *
+     * @param props
+     */
     constructor(props) {
         super(props);
 
@@ -32,9 +37,26 @@ class Chat extends React.Component {
             isOpen: false
         };
     }
+
     toggle() {
         this.setState({
             isOpen: !this.state.isOpen
+        });
+    }
+
+    /**
+     * Check whether the user is logged in and redirect
+     * him to the login page if he is not.
+     */
+    componentWillMount() {
+        fetch('http://localhost:1337/user/check', {
+            method: 'PUT'
+        }).then(response => {
+            return response.json();
+        }).then(data => {console.dir(data);
+            if (!data.session) {
+                this.props.history.push('/login');
+            }
         });
     }
 

@@ -19,9 +19,9 @@ class Login extends Component {
         super(props);
 
         this.state = {
-            isUsernameTaken: false,
             isUsernameEmpty: true,
-            username: ''
+            username: '',
+            error: ''
         };
         this.handleLoginClick = this.handleLoginClick.bind(this);
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -35,19 +35,32 @@ class Login extends Component {
     handleLoginClick(event) {
         event.preventDefault();
 
+        const username = this.state.username;
+
         // Do not proceed if username is empty
-        if (this.state.username.trim().length === 0) {
+        if (username.trim().length === 0) {
             return;
         }
 
-        const takenUsernames = ['lol', 'kek', 'cheburek'];
-        const isTaken = takenUsernames.includes(this.state.username);
+        fetch('http://localhost:1337/user/signup', {
+            method: 'PUT',
+            body: JSON.stringify({
+                nickname: username
+            }),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(response => {
+            return response.json();
+        }).then(data => {console.dir(data);
+            // If nickname is taken right now
+            if (data.code !== 201) {
+                return this.setState({ error: data.body.error });
+            }
 
-        if (isTaken) {
-            return this.setState({isUsernameTaken: isTaken});
-        }
-
-        this.props.history.push('/chat');
+            // If user has been created
+            this.props.history.push('/chat');
+        });
     }
 
     /**
@@ -60,14 +73,15 @@ class Login extends Component {
         const isEmpty = value.trim().length === 0;
 
         this.setState({
-            isUsernameTaken: false,
             isUsernameEmpty: isEmpty,
-            username: value
+            username: value,
+            error: ''
         });
     }
 
     render() {
-        const isUsernameTaken = this.state.isUsernameTaken;
+        const error = this.state.error;
+        const isError = error !== '';
 
         return (
             <div className="form-wrapper">
@@ -83,11 +97,11 @@ class Login extends Component {
                                     id="username"
                                     placeholder="username"
                                     value={this.state.username}
-                                    invalid={isUsernameTaken}
+                                    invalid={isError}
                                     onChange={this.handleInputChange}
-                                    autocomplete="off"
+                                    autoComplete="off"
                                 />
-                                <FormFeedback>Unfortunately, this username is in use now. Try another one</FormFeedback>
+                                <FormFeedback>{error}</FormFeedback>
                             </InputGroup>
                         </FormGroup>
                         <FormGroup>
