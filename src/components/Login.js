@@ -1,3 +1,4 @@
+import config from '../config';
 import React, { Component } from 'react';
 import {
     Alert,
@@ -32,13 +33,13 @@ class Login extends Component {
      * logged in and redirect him to the chat
      * in case he is.
      */
-    componentWillMount() {
-        fetch('http://localhost:1337/user/check', {
+    componentDidMount() {
+        fetch(`${config.API_URL}/user/check`, {
             method: 'PUT',
             credentials: 'include'
         }).then(response => {
             return response.json();
-        }).then(data => {console.dir(data);
+        }).then(data => {
             if (data.body.uuid) {
                 return this.props.history.push('/chat');
             }
@@ -60,18 +61,15 @@ class Login extends Component {
             return;
         }
 
-        fetch('http://localhost:1337/user/signup', {
+        fetch(`${config.API_URL}/user/signup`, {
             method: 'PUT',
             body: JSON.stringify({
                 nickname: username
             }),
-            headers: {
-                "Content-Type": "application/json"
-            },
             credentials: 'include'
         }).then(response => {
             return response.json();
-        }).then(data => {console.dir(data);
+        }).then(data => {
             // If nickname is taken right now
             if (data.code !== 201) {
                 return this.setState({ error: data.body.error });

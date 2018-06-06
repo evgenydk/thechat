@@ -1,3 +1,4 @@
+import config from '../config';
 import React from 'react';
 import {
     Form,
@@ -33,7 +34,10 @@ class Chat extends React.Component {
         super(props);
 
         this.state = {
-            isOpen: false
+            socket: null,
+            isOpen: false,
+            currentUser: {},
+            messages: []
         };
         this.toggle = this.toggle.bind(this);
         this.logout = this.logout.bind(this);
@@ -46,19 +50,51 @@ class Chat extends React.Component {
     }
 
     /**
+     * Populate chat with messages.
+     */
+    getChatMessages() {
+        fetch(`${config.API_URL}/chat/populate?offset=10`, {
+            method: 'GET',
+            credentials: 'include'
+        }).then(response => {
+            return response.json();
+        }).then(data => {
+            if (data.code !== 200) {
+                return;
+            }
+
+            this.setState({
+                messages: data.body.messages
+            });
+        });
+    }
+
+    /**
      * Check whether the user is logged in and redirect
      * him to the login page if he is not.
      */
-    componentWillMount() {
-        fetch('http://localhost:1337/user/check', {
+    componentDidMount() {
+        fetch(`${config.API_URL}/user/check`, {
             method: 'PUT',
             credentials: 'include'
         }).then(response => {
             return response.json();
-        }).then(data => {console.dir(data);
+        }).then(data => {
+            // If user not logged then redirect him
             if (!data.body.uuid) {
-                this.props.history.push('/login');
+                return this.props.history.push('/login');
             }
+
+            // Otherwise save his user object and create
+            // a socket for out connection with back-end
+            this.setState({
+                currentUser: data.body,
+                socket: new WebSocket(config.API_URL_WS)
+            });
+
+            // Populate messages after login
+            this.getChatMessages();
+            this.state.socket.send('sd');
         });
     }
 
@@ -66,13 +102,13 @@ class Chat extends React.Component {
      * Log out current user from the chat.
      */
     logout() {
-        fetch('http://localhost:1337/user/logout', {
+        fetch(`${config.API_URL}/user/logout`, {
             method: 'GET',
             credentials: 'include'
         }).then(response => {
             return response.json();
         }).then(data => {
-            // Redirect browser page to login in
+            // Redirect browser to the login page in
             // case of successful logging out
             if (data.code === 200) {
                 this.props.history.push('/login');
@@ -90,7 +126,7 @@ class Chat extends React.Component {
                             <NavbarToggler onClick={this.toggle} />
                             <Collapse isOpen={this.state.isOpen} navbar>
                                         <span className="navbar-text">
-                                            Hello, <span className="font-weight-bold">eugenics</span>
+                                            Hello, <span className="font-weight-bold">{this.state.currentUser.nickname}</span>
                                         </span>
                                 <Button color="danger" onClick={this.logout}>Log out</Button>
                             </Collapse>
@@ -108,7 +144,9 @@ class Chat extends React.Component {
                         </ListGroup>
                     </Col>
                     <Col>
-                        <Row className="h-75">Row 1</Row>
+                        <Row className="h-75">
+
+                        </Row>
                         <Row>
                             <Form>
                                 <FormGroup>
