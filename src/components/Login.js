@@ -1,5 +1,13 @@
 import React, { Component } from 'react';
-import { Alert, Button, Form, FormFeedback, FormGroup, InputGroup, InputGroupAddon, Input } from 'reactstrap';
+import {
+    Alert,
+    Button,
+    Form,
+    FormFeedback,
+    FormGroup,
+    InputGroup,
+    InputGroupAddon,
+    Input } from 'reactstrap';
 
 class Login extends Component {
     /**
@@ -26,6 +34,11 @@ class Login extends Component {
      */
     handleLoginClick(event) {
         event.preventDefault();
+
+        // Do not proceed if username is empty
+        if (this.state.username.trim().length === 0) {
+            return;
+        }
 
         const takenUsernames = ['lol', 'kek', 'cheburek'];
         const isTaken = takenUsernames.includes(this.state.username);
