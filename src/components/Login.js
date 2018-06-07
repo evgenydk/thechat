@@ -1,14 +1,6 @@
 import config from '../config';
 import React, { Component } from 'react';
-import {
-    Alert,
-    Button,
-    Form,
-    FormFeedback,
-    FormGroup,
-    InputGroup,
-    InputGroupAddon,
-    Input } from 'reactstrap';
+import { Button, Checkbox, Form, Input, Icon, Message } from 'semantic-ui-react'
 
 class Login extends Component {
     /**
@@ -22,7 +14,8 @@ class Login extends Component {
         this.state = {
             isUsernameEmpty: true,
             username: '',
-            error: null
+            error: null,
+            isProcessing: false
         };
         this.handleLoginClick = this.handleLoginClick.bind(this);
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -41,7 +34,7 @@ class Login extends Component {
             return response.json();
         }).then(data => {
             if (data.body.uuid) {
-                return this.props.history.push('/chat');
+                return this.props.history.push('/room');
             }
         });
     }
@@ -61,6 +54,9 @@ class Login extends Component {
             return;
         }
 
+        // Logging in is processing
+        this.setState({ isProcessing: true });
+
         fetch(`${config.API_URL}/user/signup`, {
             method: 'PUT',
             body: JSON.stringify({
@@ -70,13 +66,15 @@ class Login extends Component {
         }).then(response => {
             return response.json();
         }).then(data => {
+            this.setState({ isProcessing: false });
+
             // If nickname is taken right now
             if (data.code !== 201) {
                 return this.setState({ error: data.body.error });
             }
 
             // If user has been created
-            this.props.history.push('/chat');
+            this.props.history.push('/room');
         });
     }
 
@@ -97,38 +95,37 @@ class Login extends Component {
     }
 
     render() {
-        const error = this.state.error;
-        const isError = error !== null;
+        const errorText = this.state.error;
+        const isError = errorText !== null;
 
         return (
             <div className="form-wrapper">
-                <div className="rounded shadow-lg p-3 mb-5 bg-white bg-white w-25">
-                    <Alert color="secondary">
-                        Welcome to the chat! Please type your username below to login.
-                    </Alert>
-                    <Form onSubmit={this.handleLoginClick}>
-                        <FormGroup>
-                            <InputGroup>
-                                <InputGroupAddon addonType="prepend">@</InputGroupAddon>
-                                <Input
+                <div className="login-form">
+                    <Message info>
+                        <Message.Header>Welcome to the chat!</Message.Header>
+                        <p>Please type your username below to login.</p>
+                    </Message>
+                    <Form onSubmit={this.handleLoginClick} error={isError}>
+                        <Form.Field>
+                            <Input iconPosition='left'>
+                                <Icon name='at' />
+                                <input
                                     id="username"
                                     placeholder="username"
                                     value={this.state.username}
-                                    invalid={isError}
                                     onChange={this.handleInputChange}
                                     autoComplete="off"
                                 />
-                                <FormFeedback>{error}</FormFeedback>
-                            </InputGroup>
-                        </FormGroup>
-                        <FormGroup>
-                            <Button
-                                color="primary"
-                                onClick={this.handleLoginClick}
-                                disabled={this.state.isUsernameEmpty}
-                                block
-                            >Login</Button>
-                        </FormGroup>
+                            </Input>
+                            { isError ? <Message error header='Login error' content={errorText} /> : '' }
+                        </Form.Field>
+                        <Button
+                            primary
+                            onClick={this.handleLoginClick}
+                            disabled={this.state.isUsernameEmpty}
+                            fluid
+                            loading={this.state.isProcessing}
+                            type='submit'>Submit</Button>
                     </Form>
                 </div>
             </div>

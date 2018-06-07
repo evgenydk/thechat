@@ -1,12 +1,12 @@
 // Components
-import Chat from './components/Chat';
+import Room from './components/Room';
 import React from 'react';
 import Login from './components/Login';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom'
 
 // Styles
-import 'bootstrap/dist/css/bootstrap.min.css';
+import 'semantic-ui-css/semantic.min.css';
 import './css/app.css';
 
 ReactDOM.render(
@@ -14,7 +14,7 @@ ReactDOM.render(
         <BrowserRouter>
             <Switch>
                 <Route exact path="/login" component={Login} />
-                <Route exact path="/chat" component={Chat} />
+                <Route exact path="/room" component={Room} />
                 <Redirect from='/' to='/login' exact="true"/>
             </Switch>
         </BrowserRouter>
