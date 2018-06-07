@@ -3,7 +3,18 @@ body {
 }
 
 #root {
+  display: flex;
   height: 100vh;
+  padding: 20px;
+  justify-content: center;
+}
+
+.grid {
+  min-width: 75%;
+}
+
+.ui.comments {
+  max-width: 100%;
 }
 
 .form-wrapper {
@@ -20,4 +31,10 @@ body {
   background: white;
   box-shadow: 0 10px 30px rgba(0,0,0,.2);
   border-radius: 5px;
+}
+
+.comments-fixed {
+  height: 500px;
+  overflow: auto;
+  margin-bottom: 20px;
 }

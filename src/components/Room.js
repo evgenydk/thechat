@@ -1,8 +1,12 @@
+import logo from '../images/logo.svg';
+import user from '../images/user.svg';
 import React from 'react';
-import logo from '../logo.svg';
 import config from '../config';
 import SailsSocket from 'sails-socket'
-import { Grid, Image, Segment, Menu } from 'semantic-ui-react'
+import {
+    Grid, Image, Segment, Menu,
+    Card, Button,Comment, Form,
+    Header, Feed } from 'semantic-ui-react'
 
 SailsSocket.connect({ url: config.API_URL });
 
@@ -158,7 +162,7 @@ class Room extends React.Component {
                                 <img src={logo} />
                             </Menu.Item>
                             <Menu.Item>
-                                Hello, chel!
+                                Hello, {this.state.currentUser.nickname}!
                             </Menu.Item>
                             <Menu.Menu position='right'>
                                 <Menu.Item onClick={this.logout}>
@@ -170,11 +174,63 @@ class Room extends React.Component {
                 </Grid.Row>
 
                 <Grid.Row columns={2}>
-                    <Grid.Column>
-                        <Image src='/assets/images/wireframe/paragraph.png' />
+                    <Grid.Column width={4}>
+
+                        <Card fluid>
+                            <Card.Content>
+                                <Card.Header>Users online</Card.Header>
+                            </Card.Content>
+                            <Card.Content>
+                                <Feed>
+                                    <Feed.Event>
+                                        <Feed.Label image={user} />
+                                        <Feed.Content>
+                                            <Feed.Summary>
+                                                username
+                                            </Feed.Summary>
+                                        </Feed.Content>
+                                    </Feed.Event>
+                                </Feed>
+                            </Card.Content>
+                        </Card>
+
                     </Grid.Column>
-                    <Grid.Column>
-                        <Image src='/assets/images/wireframe/paragraph.png' />
+                    <Grid.Column width={12}>
+
+                        <Segment>
+                            <Comment.Group minimal>
+                                <Header as='h3' dividing>
+                                    Chat
+                                </Header>
+
+                                <div className="comments-fixed">
+                                    {this.state.messages.map((message, i) =>
+                                        <Comment key={i}>
+                                            <Comment.Avatar src={user} />
+                                            <Comment.Content>
+                                                <Comment.Author>{message.sender}</Comment.Author>
+                                                <Comment.Metadata>
+                                                    <span>Today at 5:42PM</span>
+                                                </Comment.Metadata>
+                                                <Comment.Text>{message.message}</Comment.Text>
+                                            </Comment.Content>
+                                        </Comment>
+                                    )}
+                                </div>
+
+                                <Form onSubmit={this.handleMessageFormSubmit}>
+                                    <Form.Group>
+                                        <Form.Input
+                                            placeholder='Type your message'
+                                            value={this.state.message}
+                                            onChange={this.handleMessageInputChange}
+                                            width={14} />
+                                        <Button content='Send' labelPosition='left' icon='send' primary />
+                                    </Form.Group>
+                                </Form>
+                            </Comment.Group>
+                        </Segment>
+
                     </Grid.Column>
                 </Grid.Row>
             </Grid>
