@@ -1,7 +1,8 @@
 import React from 'react';
+import logo from '../logo.svg';
 import config from '../config';
-
 import SailsSocket from 'sails-socket'
+import { Grid, Image, Segment, Menu } from 'semantic-ui-react'
 
 SailsSocket.connect({ url: config.API_URL });
 
@@ -149,7 +150,34 @@ class Room extends React.Component {
 
     render() {
         return (
-            <div><button onClick={this.logout}>Log out</button></div>
+            <Grid columns={1}>
+                <Grid.Row>
+                    <Grid.Column>
+                        <Menu stackable>
+                            <Menu.Item>
+                                <img src={logo} />
+                            </Menu.Item>
+                            <Menu.Item>
+                                Hello, chel!
+                            </Menu.Item>
+                            <Menu.Menu position='right'>
+                                <Menu.Item onClick={this.logout}>
+                                    Log out
+                                </Menu.Item>
+                            </Menu.Menu>
+                        </Menu>
+                    </Grid.Column>
+                </Grid.Row>
+
+                <Grid.Row columns={2}>
+                    <Grid.Column>
+                        <Image src='/assets/images/wireframe/paragraph.png' />
+                    </Grid.Column>
+                    <Grid.Column>
+                        <Image src='/assets/images/wireframe/paragraph.png' />
+                    </Grid.Column>
+                </Grid.Row>
+            </Grid>
         )
     }
 }
