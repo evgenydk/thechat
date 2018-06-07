@@ -1,5 +1,4 @@
 import logo from '../images/logo.svg';
-import user from '../images/user.svg';
 import React from 'react';
 import config from '../config';
 import SailsSocket from 'sails-socket'
@@ -8,7 +7,7 @@ import {
     Card, Button,Comment, Form,
     Header, Feed } from 'semantic-ui-react'
 
-SailsSocket.connect({ url: config.API_URL });
+import userIcon from '../images/user.svg';
 
 class Room extends React.Component {
     /**
@@ -20,22 +19,70 @@ class Room extends React.Component {
         super(props);
 
         this.state = {
-            isOpen: false,
             currentUser: {},
             message: '',
-            messages: []
+            messages: [],
+            users: []
         };
-        this.toggle = this.toggle.bind(this);
+
         this.logout = this.logout.bind(this);
+        this.updateMessages = this.updateMessages.bind(this);
+        this.updateOnlineUsers = this.updateOnlineUsers.bind(this);
         this.handleMessageFormSubmit = this.handleMessageFormSubmit.bind(this);
         this.handleMessageInputChange = this.handleMessageInputChange.bind(this);
+
+        SailsSocket.connect({ url: config.API_URL });
+        SailsSocket.on('message', this.updateMessages);
+        SailsSocket.on('keepalive', this.updateOnlineUsers);
     }
 
     /**
-     * Check whether the user is logged in and redirect
-     * him to the login page if he is not.
+     * Executes after the component has loaded.
      */
     componentDidMount() {
+        this.authenticate(() => {
+            this.join();
+            this.getMessages();
+
+            // Sending keepAlive on a regular basis
+            setInterval(() => this.sendKeepAlive(), 1000)
+        });
+    }
+
+    /**
+     * Keep online users list in actual state.
+     *
+     * @param {object} user
+     */
+    updateOnlineUsers(user) {
+        let username = user.nickname;
+
+        if (this.state.users.includes(username)) {
+            return;
+        }
+
+        this.setState({
+            users: [...this.state.users, username]
+        });
+    }
+
+    /**
+     * Updates messages list when a new one arrives.
+     *
+     * @param {object} message
+     */
+    updateMessages(message) {
+        this.setState({
+            messages: [...this.state.messages, message]
+        });
+    }
+
+    /**
+     * User authentication.
+     *
+     * @param {function} callback
+     */
+    authenticate(callback) {
         fetch(`${config.API_URL}/user/check`, {
             method: 'PUT',
             credentials: 'include'
@@ -49,18 +96,25 @@ class Room extends React.Component {
 
             // Otherwise save his user object
             this.setState({ currentUser: data.body });
-            this.join();
-            this.getMessages();
-
-            SailsSocket.on('/chat', data => {
-                console.dir(data);
-            });
+            callback();
         });
     }
 
-    toggle() {
-        this.setState({
-            isOpen: !this.state.isOpen
+    /**
+     * Log out current user from the chat.
+     */
+    logout() {
+        fetch(`${config.API_URL}/user/logout`, {
+            method: 'GET',
+            credentials: 'include'
+        }).then(response => {
+            return response.json();
+        }).then(data => {
+            // Redirect browser to the login page in
+            // case of successful logging out
+            if (data.code === 200) {
+                this.props.history.push('/login');
+            }
         });
     }
 
@@ -89,6 +143,15 @@ class Room extends React.Component {
      */
     join() {
         SailsSocket.put('/chat/join');
+    }
+
+    /**
+     * Sends keepAlive packet through WS.
+     */
+    sendKeepAlive() {
+        SailsSocket.post('/chat/keepalive', {
+            nickname: this.state.currentUser.nickname
+        });
     }
 
     /**
@@ -134,24 +197,6 @@ class Room extends React.Component {
         this.setState({ message: message });
     }
 
-    /**
-     * Log out current user from the chat.
-     */
-    logout() {
-        fetch(`${config.API_URL}/user/logout`, {
-            method: 'GET',
-            credentials: 'include'
-        }).then(response => {
-            return response.json();
-        }).then(data => {
-            // Redirect browser to the login page in
-            // case of successful logging out
-            if (data.code === 200) {
-                this.props.history.push('/login');
-            }
-        });
-    }
-
     render() {
         return (
             <Grid columns={1}>
@@ -181,16 +226,18 @@ class Room extends React.Component {
                                 <Card.Header>Users online</Card.Header>
                             </Card.Content>
                             <Card.Content>
-                                <Feed>
-                                    <Feed.Event>
-                                        <Feed.Label image={user} />
-                                        <Feed.Content>
-                                            <Feed.Summary>
-                                                username
-                                            </Feed.Summary>
-                                        </Feed.Content>
-                                    </Feed.Event>
-                                </Feed>
+                                {this.state.users && this.state.users.map((nickname, i) =>
+                                    <Feed key={i}>
+                                        <Feed.Event>
+                                            <Feed.Label image={userIcon} />
+                                            <Feed.Content>
+                                                <Feed.Summary>
+                                                    {nickname}
+                                                </Feed.Summary>
+                                            </Feed.Content>
+                                        </Feed.Event>
+                                    </Feed>
+                                )}
                             </Card.Content>
                         </Card>
 
@@ -204,13 +251,13 @@ class Room extends React.Component {
                                 </Header>
 
                                 <div className="comments-fixed">
-                                    {this.state.messages.map((message, i) =>
+                                    {this.state.messages && this.state.messages.map((message, i) =>
                                         <Comment key={i}>
-                                            <Comment.Avatar src={user} />
+                                            <Comment.Avatar src={userIcon} />
                                             <Comment.Content>
-                                                <Comment.Author>{message.sender}</Comment.Author>
+                                                <Comment.Author as='a'>{message.sender}</Comment.Author>
                                                 <Comment.Metadata>
-                                                    <span>Today at 5:42PM</span>
+                                                    <span>{new Date(message.createdAt).toLocaleString("en-US")}</span>
                                                 </Comment.Metadata>
                                                 <Comment.Text>{message.message}</Comment.Text>
                                             </Comment.Content>
