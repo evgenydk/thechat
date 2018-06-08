@@ -62,14 +62,14 @@ class Room extends React.Component {
     componentDidUpdate(previousProps, previousState) {
         let hasNewMsgs = previousState.messages.length !== this.state.messages.length;
 
-        // Scroll messages area to bottom if a new messages comes
+        // Scroll messages area to bottom if a new message comes
         if (hasNewMsgs) {
             this.refs.chatAarea.scrollTop = this.refs.chatAarea.scrollHeight;
         }
     }
 
     /**
-     * Keep online users list in actual state.
+     * Keeps online users list in actual state.
      *
      * @param {object} user
      */
@@ -89,7 +89,7 @@ class Room extends React.Component {
             users[userIndex].lastSeen = Date.now();
         }
 
-        // Remove users that were seen more than a period
+        // Remove users that haven't been seen lately
         users = users.filter(u => {
             let diff = Date.now() - u.lastSeen;
 
@@ -149,8 +149,6 @@ class Room extends React.Component {
         }).then(response => {
             return response.json();
         }).then(data => {
-            // Redirect browser to the login page in
-            // case of successful logging out
             if (data.code === 200) {
                 window.location.reload();
             }
@@ -304,7 +302,10 @@ class Room extends React.Component {
                                             <Comment.Content>
                                                 <Comment.Author as='a'>{message.sender}</Comment.Author>
                                                 <Comment.Metadata>
-                                                    <span>{new Date(message.createdAt).toLocaleString("en-US")}</span>
+                                                    <span>{message.createdAt
+                                                        ? new Date(message.createdAt).toLocaleString("en-US")
+                                                        : ''
+                                                    }</span>
                                                 </Comment.Metadata>
                                                 <Comment.Text>{message.message}</Comment.Text>
                                             </Comment.Content>
