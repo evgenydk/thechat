@@ -1,4 +1,5 @@
 import config from '../config';
+import ProblemModal from './ProblemModal';
 import React, { Component } from 'react';
 import { Button, Form, Input, Icon, Message } from 'semantic-ui-react'
 
@@ -15,7 +16,8 @@ class Login extends Component {
             isUsernameEmpty: true,
             username: '',
             error: null,
-            isProcessing: false
+            isProcessing: false,
+            isConnectionProblem: false
         };
         this.handleLoginClick = this.handleLoginClick.bind(this);
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -36,6 +38,10 @@ class Login extends Component {
             if (data.body.uuid) {
                 return this.props.history.push('/room');
             }
+        }).catch(() => {
+            this.setState({
+                isConnectionProblem: true
+            });
         });
     }
 
@@ -128,6 +134,7 @@ class Login extends Component {
                             type='submit'>Submit</Button>
                     </Form>
                 </div>
+                <ProblemModal open={this.state.isConnectionProblem} />
             </div>
         );
     }

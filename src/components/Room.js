@@ -3,6 +3,7 @@ import React from 'react';
 import config from '../config';
 import userIcon from '../images/user.svg';
 import SailsSocket from 'sails-socket'
+import ProblemModal from './ProblemModal';
 import {
     Grid, Segment, Menu, Feed,
     Card, Button,Comment, Form,
@@ -21,7 +22,8 @@ class Room extends React.Component {
             currentUser: {},
             message: '',
             messages: [],
-            users: []
+            users: [],
+            isConnectionProblem: false
         };
 
         this.logout = this.logout.bind(this);
@@ -130,6 +132,10 @@ class Room extends React.Component {
             // Otherwise save his user object
             this.setState({ currentUser: data.body });
             callback();
+        }).catch(() => {
+            this.setState({
+                isConnectionProblem: true
+            });
         });
     }
 
@@ -326,6 +332,7 @@ class Room extends React.Component {
 
                     </Grid.Column>
                 </Grid.Row>
+                <ProblemModal open={this.state.isConnectionProblem} />
             </Grid>
         )
     }
