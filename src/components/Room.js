@@ -1,13 +1,12 @@
 import logo from '../images/logo.svg';
 import React from 'react';
 import config from '../config';
+import userIcon from '../images/user.svg';
 import SailsSocket from 'sails-socket'
 import {
-    Grid, Image, Segment, Menu,
+    Grid, Segment, Menu, Feed,
     Card, Button,Comment, Form,
-    Header, Feed } from 'semantic-ui-react'
-
-import userIcon from '../images/user.svg';
+    Header } from 'semantic-ui-react'
 
 class Room extends React.Component {
     /**
@@ -27,13 +26,10 @@ class Room extends React.Component {
 
         this.logout = this.logout.bind(this);
         this.updateMessages = this.updateMessages.bind(this);
+        this.isMessageEmpty = this.isMessageEmpty.bind(this);
         this.updateOnlineUsers = this.updateOnlineUsers.bind(this);
         this.handleMessageFormSubmit = this.handleMessageFormSubmit.bind(this);
         this.handleMessageInputChange = this.handleMessageInputChange.bind(this);
-
-        SailsSocket.connect({ url: config.API_URL });
-        SailsSocket.on('message', this.updateMessages);
-        SailsSocket.on('keepalive', this.updateOnlineUsers);
     }
 
     /**
@@ -41,12 +37,33 @@ class Room extends React.Component {
      */
     componentDidMount() {
         this.authenticate(() => {
-            this.join();
+            // If auth was successful then create
+            // a WS connection and set listeners
+            SailsSocket.connect({ url: config.API_URL });
+            SailsSocket.on('message', this.updateMessages);
+            SailsSocket.on('keepalive', this.updateOnlineUsers);
+
+            this.joinChat();
             this.getMessages();
 
             // Sending keepAlive on a regular basis
-            setInterval(() => this.sendKeepAlive(), 1000)
+            setInterval(() => this.sendKeepAlive(), config.KEEP_ALIVE_MS)
         });
+    }
+
+    /**
+     * When component updates.
+     *
+     * @param {object} previousProps
+     * @param {object} previousState
+     */
+    componentDidUpdate(previousProps, previousState) {
+        let hasNewMsgs = previousState.messages.length !== this.state.messages.length;
+
+        // Scroll messages area to bottom if a new messages comes
+        if (hasNewMsgs) {
+            this.refs.chatAarea.scrollTop = this.refs.chatAarea.scrollHeight;
+        }
     }
 
     /**
@@ -55,19 +72,35 @@ class Room extends React.Component {
      * @param {object} user
      */
     updateOnlineUsers(user) {
-        let username = user.nickname;
+        let users = this.state.users.slice();
+        let userIndex = users.findIndex(u => u.nickname === user.nickname);
 
-        if (this.state.users.includes(username)) {
-            return;
+        // First check if user is already in the list
+        if (userIndex === -1) {
+            // If not found then add him
+            users.push({
+                nickname: user.nickname,
+                lastSeen: Date.now()
+            });
+        } else {
+            // Otherwise just update his lastSeen timestamp
+            users[userIndex].lastSeen = Date.now();
         }
 
+        // Remove users that were seen more than a period
+        users = users.filter(u => {
+            let diff = Date.now() - u.lastSeen;
+
+            return diff <= config.KEEP_ALIVE_MS
+        });
+
         this.setState({
-            users: [...this.state.users, username]
+            users: users
         });
     }
 
     /**
-     * Updates messages list when a new one arrives.
+     * Adds a new message to the list.
      *
      * @param {object} message
      */
@@ -113,7 +146,7 @@ class Room extends React.Component {
             // Redirect browser to the login page in
             // case of successful logging out
             if (data.code === 200) {
-                this.props.history.push('/login');
+                window.location.reload();
             }
         });
     }
@@ -122,7 +155,7 @@ class Room extends React.Component {
      * Populate chat with messages.
      */
     getMessages() {
-        fetch(`${config.API_URL}/chat/populate?offset=10`, {
+        fetch(`${config.API_URL}/chat/populate?offset=${config.HISTORY_MSG_COUNT}`, {
             method: 'GET',
             credentials: 'include'
         }).then(response => {
@@ -141,7 +174,7 @@ class Room extends React.Component {
     /**
      * Join the chat.
      */
-    join() {
+    joinChat() {
         SailsSocket.put('/chat/join');
     }
 
@@ -172,12 +205,27 @@ class Room extends React.Component {
     }
 
     /**
+     * Whether typed message is empty.
+     *
+     * @returns {boolean}
+     */
+    isMessageEmpty() {
+        return this.state.message.trim().length === 0;
+    }
+
+    /**
      * Handles submitting the new message form.
      *
      * @param event
      */
     handleMessageFormSubmit(event) {
         event.preventDefault();
+
+        // Do not allow to send empty messages
+        if (this.isMessageEmpty()) {
+            return;
+        }
+
         this.sendMessage(this.state.message);
     }
 
@@ -187,14 +235,7 @@ class Room extends React.Component {
      * @param event
      */
     handleMessageInputChange(event) {
-        const message = event.target.value.trim();
-
-        // Do not allow to send empty messages
-        if (message.length === 0) {
-            return;
-        }
-
-        this.setState({ message: message });
+        this.setState({ message: event.target.value });
     }
 
     render() {
@@ -226,13 +267,13 @@ class Room extends React.Component {
                                 <Card.Header>Users online</Card.Header>
                             </Card.Content>
                             <Card.Content>
-                                {this.state.users && this.state.users.map((nickname, i) =>
+                                {this.state.users && this.state.users.map((user, i) =>
                                     <Feed key={i}>
                                         <Feed.Event>
                                             <Feed.Label image={userIcon} />
                                             <Feed.Content>
                                                 <Feed.Summary>
-                                                    {nickname}
+                                                    {user.nickname}
                                                 </Feed.Summary>
                                             </Feed.Content>
                                         </Feed.Event>
@@ -250,7 +291,7 @@ class Room extends React.Component {
                                     Chat
                                 </Header>
 
-                                <div className="comments-fixed">
+                                <div className="comments-fixed" ref="chatAarea">
                                     {this.state.messages && this.state.messages.map((message, i) =>
                                         <Comment key={i}>
                                             <Comment.Avatar src={userIcon} />
@@ -272,7 +313,12 @@ class Room extends React.Component {
                                             value={this.state.message}
                                             onChange={this.handleMessageInputChange}
                                             width={14} />
-                                        <Button content='Send' labelPosition='left' icon='send' primary />
+                                        <Button
+                                            content='Send'
+                                            labelPosition='left'
+                                            icon='send'
+                                            disabled={this.isMessageEmpty()}
+                                            primary />
                                     </Form.Group>
                                 </Form>
                             </Comment.Group>

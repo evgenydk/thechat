@@ -1,6 +1,6 @@
 import config from '../config';
 import React, { Component } from 'react';
-import { Button, Checkbox, Form, Input, Icon, Message } from 'semantic-ui-react'
+import { Button, Form, Input, Icon, Message } from 'semantic-ui-react'
 
 class Login extends Component {
     /**
