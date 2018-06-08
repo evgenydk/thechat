@@ -1,5 +1,5 @@
 {
-  "API_URL": "http://192.168.1.45:1337",
+  "API_URL": "http://localhost:1337",
   "HISTORY_MSG_COUNT": 30,
   "KEEP_ALIVE_MS": 1000
 }
